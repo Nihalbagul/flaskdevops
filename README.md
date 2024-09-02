@@ -1,113 +1,135 @@
-Flask and MongoDB with Kubernetes
-Project Overview
-This project sets up a Flask web application with a MongoDB database, deployed on a Kubernetes cluster. The Flask application exposes two endpoints:
 
-/: A welcome message with the current time.
-/data: Allows inserting and retrieving data from MongoDB.
-Prerequisites
-Docker
-Kubernetes (Minikube or a managed Kubernetes service)
-kubectl CLI
-helm (optional, for easier deployments)
-Directory Structure
-arduino
-Copy code
-.
-├── k8s-config
-│   ├── deployment.yaml
-│   ├── mongo-service.yaml
-│   ├── mongo-statefulset.yaml
-│   └── flask-service.yaml
-├── src
-│   ├── app.py
-│   └── requirements.txt
-├── Dockerfile
-└── README.md
-Setup Instructions
-1. Clone the Repository
-sh
-Copy code
-git clone <repository-url>
-cd <repository-directory>
-2. Build Docker Images
-For Flask Application:
+# Flask and MongoDB with Kubernetes
 
-sh
-Copy code
-cd src
-docker build -t <your-dockerhub-username>/flask-app .
-For MongoDB:
+A Flask web application connected to a MongoDB database, deployed on a Kubernetes cluster. The application supports basic CRUD operations with data persistence and uses Kubernetes for deployment and scaling.
 
-MongoDB doesn't require a custom Dockerfile as we're using an official image from Docker Hub.
+## Table of Contents
 
-3. Create Kubernetes Resources
-MongoDB StatefulSet
-Create the MongoDB StatefulSet and Service:
+- [Features](#features)
+- [Getting Started](#getting-started)
+- [Installation](#installation)
+- [Usage](#usage)
+- [Folder Structure](#folder-structure)
+- [Dependencies](#dependencies)
+- [State Management](#state-management)
+- [Contributing](#contributing)
+- [License](#license)
 
-sh
-Copy code
-kubectl apply -f k8s-config/mongo-statefulset.yaml
-kubectl apply -f k8s-config/mongo-service.yaml
-Flask Application Deployment and Service
-Create the Flask Deployment and Service:
+## Features
 
-sh
-Copy code
-kubectl apply -f k8s-config/deployment.yaml
-kubectl apply -f k8s-config/flask-service.yaml
-4. Verify the Deployment
-Check the status of pods, services, and deployments:
+- **Basic CRUD Operations**: Create, read, and manage data via RESTful endpoints.
+- **Data Persistence**: Data is stored in MongoDB and persists across application restarts.
+- **Kubernetes Deployment**: Deploys the application and MongoDB using Kubernetes for scaling and management.
+- **Service Discovery**: Utilizes Kubernetes services to manage inter-service communication.
+- **Logging**: Provides basic logging for troubleshooting and debugging.
 
-sh
-Copy code
-kubectl get pods
-kubectl get svc
-kubectl get deployments
-5. Access the Application
-You can access the Flask application using the Kubernetes service. If you're using Minikube, you can expose the service with:
+## Getting Started
 
-sh
-Copy code
+To get started with this project, follow the installation and deployment instructions.
+
+### Prerequisites
+
+- Docker
+- Kubernetes (Minikube or a managed Kubernetes service)
+- `kubectl` CLI
+- Docker Hub account (for pushing images)
+
+### Installation
+
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/Nihalbagul/flaskdevops.git
+   cd flaskdevops
+   ```
+
+2. Build Docker images:
+
+   **For Flask Application:**
+   ```bash
+   cd src
+   docker build -t <your-dockerhub-username>/flask-app .
+   ```
+
+3. Push Docker images to Docker Hub:
+   ```bash
+   docker push <your-dockerhub-username>/flask-app
+   ```
+
+4. Create Kubernetes resources:
+
+   **MongoDB StatefulSet and Service:**
+   ```bash
+   kubectl apply -f k8s-config/mongo-statefulset.yaml
+   kubectl apply -f k8s-config/mongo-service.yaml
+   ```
+
+   **Flask Deployment and Service:**
+   ```bash
+   kubectl apply -f k8s-config/deployment.yaml
+   kubectl apply -f k8s-config/flask-service.yaml
+   ```
+
+### Usage
+
+#### Accessing the Application
+
+Use the following commands to access the Flask application:
+
+**Minikube:**
+```bash
 minikube service flask-service
-For other Kubernetes environments, you may need to set up an Ingress or use kubectl port-forward:
+```
 
-sh
-Copy code
+**For other Kubernetes environments:**
+```bash
 kubectl port-forward svc/flask-service 5000:5000
-Environment Variables
-Ensure that the Flask application has the correct environment variables set for MongoDB:
+```
 
-MONGODB_URI: MongoDB connection string, e.g., mongodb://mongo:27017/
-Example Environment Configuration in Deployment
-yaml
-Copy code
-env:
-- name: MONGODB_URI
-  value: "mongodb://mongo:27017/"
-Troubleshooting
-Common Issues
-500 Internal Server Error: Check MongoDB logs and ensure MongoDB is running correctly. Ensure that the MONGODB_URI is correct and the Flask application is able to reach the MongoDB service.
-Connection Refused Errors: Ensure that the MongoDB pod is running and the service is correctly pointing to the MongoDB pod. Check service and endpoint configurations.
-Network Issues: Use kubectl exec to run commands in the Flask pod and check connectivity to MongoDB. For example, use nc to check port connectivity.
-Debugging Tips
-Check Logs: Check the logs of both the Flask and MongoDB pods for any errors.
+#### API Endpoints
 
-sh
-Copy code
-kubectl logs <flask-pod-name>
-kubectl logs <mongo-pod-name>
-Pod Connectivity: Use a temporary pod to test connectivity between services.
+- **GET /**: Returns a welcome message with the current time.
+- **POST /data**: Inserts new data into the MongoDB collection.
+- **GET /data**: Retrieves all data from the MongoDB collection.
 
-sh
-Copy code
-kubectl run -i --tty --rm debug --image=alpine --restart=Never -- sh
-apk add --no-cache nc
-nc -zv mongo 27017
-Service and Endpoints: Verify the service configuration and ensure the correct endpoints are exposed.
+## Folder Structure
 
-sh
-Copy code
-kubectl get svc mongo
-kubectl get endpoints mongo
-License
-This project is licensed under the MIT License - see the LICENSE file for details.
+```markdown
+flask-mongodb-kubernetes/
+├── k8s-config/
+│   ├── deployment.yaml          # Kubernetes Deployment configuration for Flask
+│   ├── flask-service.yaml       # Kubernetes Service configuration for Flask
+│   ├── mongo-service.yaml       # Kubernetes Service configuration for MongoDB
+│   └── mongo-statefulset.yaml   # Kubernetes StatefulSet configuration for MongoDB
+├── src/
+│   ├── app.py                   # Main Flask application
+│   └── requirements.txt         # Python dependencies
+├── Dockerfile                   # Dockerfile for Flask application
+└── README.md                    # Project documentation
+```
+
+## Dependencies
+
+- **Flask**: Web framework for Python.
+- **pymongo**: MongoDB driver for Python.
+- **Docker**: For containerizing the application.
+- **Kubernetes**: For deploying and managing containerized applications.
+
+## State Management
+
+The application does not use state management in the traditional sense as it relies on MongoDB for data storage. The MongoDB connection is managed through environment variables in the Kubernetes deployment configuration.
+
+## Contributing
+
+Contributions are welcome! Please fork the repository and submit a pull request.
+
+1. Fork the repository.
+2. Create a new branch (`git checkout -b feature-branch`).
+3. Make your changes.
+4. Commit your changes (`git commit -am 'Add new feature'`).
+5. Push to the branch (`git push origin feature-branch`).
+6. Create a new pull request.
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
